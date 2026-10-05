@@ -191,6 +191,20 @@ void ChangeCompressorStation(CompressorStation& station)
         cout << "Editing cancelled.\n";
     }
 }
+void SavePipe(ofstream& file, const Pipe& pipe)
+{
+    file << pipe.kilometerMark << '\n';
+    file << pipe.length << '\n';
+    file << pipe.diameter << '\n';
+    file << pipe.isUnderRepair << '\n';
+}
+void SaveStation(ofstream& file, const CompressorStation& station)
+{
+    file << station.name << '\n';
+    file << station.countShops << '\n';
+    file << station.countShopsInWork << '\n';
+    file << station.stationClass << '\n';
+}
 void SaveData(const Pipe& pipe, bool pipeExists, const CompressorStation& station, bool stationExists)
 {
     if (!pipeExists && !stationExists)
@@ -207,20 +221,19 @@ void SaveData(const Pipe& pipe, bool pipeExists, const CompressorStation& statio
     file << pipeExists << '\n';
     if (pipeExists)
     {
-        file << pipe.kilometerMark << '\n';
-        file << pipe.length << '\n';
-        file << pipe.diameter << '\n';
-        file << pipe.isUnderRepair << '\n';
+        SavePipe(file, pipe);
     }
     file << stationExists << '\n';
     if (stationExists)
     {
-        file << station.name << '\n';
-        file << station.countShops << '\n';
-        file << station.countShopsInWork << '\n';
-        file << station.stationClass << '\n';
+        SaveStation(file, station);
     }
     file.close();
+    if (!file)
+    {
+        cout << "Error: could not finish writing data.txt.\n";
+        return;
+    }
     cout << "Data saved successfully to data.txt.\n";
 }
 void LoadData(Pipe& pipe, bool& pipeExists, CompressorStation& station, bool& stationExists)
@@ -231,59 +244,27 @@ void LoadData(Pipe& pipe, bool& pipeExists, CompressorStation& station, bool& st
         cout << "Error: data.txt was not found.\n";
         return;
     }
-    Pipe loadedPipe;
-    CompressorStation loadedStation;
-    int loadedPipeExists;
-    int loadedStationExists;
-    int repairStatus;
-    if (!(file >> loadedPipeExists) || (loadedPipeExists != 0 && loadedPipeExists != 1))
-    {
-        cout << "Error: incorrect pipe data in the file.\n";
-        return;
-    }
+    file >> pipeExists;
     file.ignore(10000, '\n');
-    if (loadedPipeExists == 1)
+    if (pipeExists)
     {
-        getline(file, loadedPipe.kilometerMark);
-        if (!(file >> loadedPipe.length) || !(file >> loadedPipe.diameter) || !(file >> repairStatus))
-        {
-            cout << "Error: incorrect pipe data in the file.\n";
-            return;
-        }
-        if (loadedPipe.kilometerMark.empty() || loadedPipe.length <= 0 || loadedPipe.diameter <= 0 || (repairStatus != 0 && repairStatus != 1))
-        {
-            cout << "Error: incorrect pipe values in the file.\n";
-            return;
-        }
-        loadedPipe.isUnderRepair = repairStatus == 1;
+        getline(file, pipe.kilometerMark);
+        file >> pipe.length;
+        file >> pipe.diameter;
+        file >> pipe.isUnderRepair;
         file.ignore(10000, '\n');
     }
-    if (!(file >> loadedStationExists) || (loadedStationExists != 0 && loadedStationExists != 1))
-    {
-        cout << "Error: incorrect station data in the file.\n";
-        return;
-    }
+    file >> stationExists;
     file.ignore(10000, '\n');
-    if (loadedStationExists == 1)
+    if (stationExists)
     {
-        getline(file, loadedStation.name);
-        if (!(file >> loadedStation.countShops) || !(file >> loadedStation.countShopsInWork) || !(file >> loadedStation.stationClass))
-        {
-            cout << "Error: incorrect station data in the file.\n";
-            return;
-        }
-        if (loadedStation.name.empty() || loadedStation.countShops <= 0 || loadedStation.countShopsInWork < 0 || loadedStation.countShopsInWork > loadedStation.countShops || (loadedStation.stationClass != 'A' && loadedStation.stationClass != 'B' && loadedStation.stationClass != 'C'))
-        {
-            cout << "Error: incorrect station values in the file.\n";
-            return;
-        }
+        getline(file, station.name);
+        file >> station.countShops;
+        file >> station.countShopsInWork;
+        file >> station.stationClass;
     }
-    pipe = loadedPipe;
-    station = loadedStation;
-    pipeExists = loadedPipeExists == 1;
-    stationExists = loadedStationExists == 1;
     file.close();
-    cout << "Data loaded successfully from data.txt.\n";
+    cout << "Data loaded from data.txt.\n";
 }
 int main()
 {
